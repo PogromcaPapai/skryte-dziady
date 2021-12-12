@@ -1,13 +1,14 @@
 from json import load as _jsonload
 from re import compile as _regcomp
 from random import choice as _choice, seed
+from time import perf_counter_ns
 from typing import Match
 from cipher import TRANS
 
 PATTERN = _regcomp("(?P<coding>"+"|".join(["(%s)" % i for i in TRANS.keys()])+')|.')
 
 with open('words/processed.json', 'r') as f:
-    WORDS = _jsonload(f)
+    WORDS = set(_jsonload(f))
 
 def process_words(text: str, bytes_: str):
     list_bytes = [i == "1" for i in bytes_]
@@ -61,10 +62,14 @@ def find_zero(word):
         return zero
     
 if __name__ == "__main__":
+    from time import perf_counter
     # seed(123)
     # seed(3232)
     words = 'studniówka', 'test', 'Bóg', "źdźbło", "brzęczy", "chrząszcz", "gęślą"
     
     for word in words:
-        print(equivalent(word))
-        print(find_zero(word))
+        start = perf_counter_ns()
+        zero = find_zero(word)
+        end = perf_counter_ns()
+        eq = equivalent(word)
+        print(zero, (end-start)/1000, [i for i in eq if i in WORDS], eq, sep='\t')
