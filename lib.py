@@ -63,7 +63,7 @@ def find_zero(word):
 if __name__ == "__main__":
     # seed(123)
     # seed(3232)
-    words = 'studniówka', 'test', 'Bóg'
+    words = 'studniówka', 'test', 'Bóg', "źdźbło", "brzęczy", "chrząszcz", "gęślą"
     
     for word in words:
         print(equivalent(word))
