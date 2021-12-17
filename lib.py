@@ -57,19 +57,18 @@ def find_zero(word):
         return ZEROS[word], False
     except KeyError:
         absclass = equivalent(word)
-        exist = [i for i in absclass if i in WORDS or i.lower() in WORDS]
+        exist = [i for i in absclass if i in WORDS]
         if exist:
             exist.sort()
-            # rnd.seed(1)
-            zero = rnd.choice(exist) # FIX: load przywołuje to raz więcej lol na
+            zero = rnd.choice(exist)
+            # print(exist, absclass, zero)
             randoms += 1
             not_code = False
         else:
             zero = word
             not_code = True
         for i in absclass:
-            ZEROS[i.lower()] = zero.lower()
-            ZEROS[i.capitalize()] = zero.capitalize()
+            ZEROS[i] = zero
         return zero, not_code
 
 
