@@ -1,24 +1,22 @@
 import argparse
-from code import TRANS
+from lib import *
 
-parser = argparse.ArgumentParser(description='Zapisuje plik po konwersji')
-parser.add_argument('key', help='Klucz ')
-parser.add_argument('back', help='Plik tło')
+parser = argparse.ArgumentParser(description='Szyfruje wiadomość w postaci błędów ortograficznych')
+parser.add_argument('key', help='Klucz', type=int)
+parser.add_argument('input', help='Plik startowy')
 parser.add_argument('data', help='Plik z kodem')
+parser.add_argument('--output', help='Plik docelowy')
 
 args = parser.parse_args()
+seed(args.key)
 
-new = []
-with open(args.back, 'r', encoding='utf8') as background:
+with open(args.input, 'r', encoding='utf8') as background:
     with open(args.data, 'rb') as byts:
-        for i in byts.read():
-            for j in format(i, '08b'):
-                while (token := background.read(1)) not in TRANS:
-                    new.append(token)
-                if j == '1':
-                    new.append(TRANS[token])
-                else:
-                    new.append(token)
+        data = sum(([j for j in format(i, '08b')] for i in byts.read()), [])
+        encoded = encode_text(background.read(), data)
 
-    new.append(background.read())
-print("".join(new))
+if args.output:
+    with open(args.output, 'w', encoding='utf8') as new:
+        new.write(encoded)
+else:
+    print(encoded)
