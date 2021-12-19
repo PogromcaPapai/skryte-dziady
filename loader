@@ -1,5 +1,6 @@
 import argparse
 from lib import *
+logger('loader')
 
 parser = argparse.ArgumentParser(description='Odszyfrowuje wiadomość w postaci błędów ortograficznych')
 parser.add_argument('key', help='Klucz', type=int)

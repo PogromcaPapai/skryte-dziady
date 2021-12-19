@@ -1,11 +1,20 @@
 from json import load as _jsonload
-from re import compile as _regcomp, escape as _rescape
+from re import T, compile as _regcomp
 from random import Random
-from typing import Iterable, Match
-from cipher import TRANS
+from typing import Match
+from collections import Counter
 
-PUNCTUATIONS = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+from cipher import TRANS
+from tqdm import tqdm
+
+PUNCTUATIONS = """$¢‘⁄\\‡°{⁂&′,·>§*’¦._№¶—¥₪"}?@–¬(%…[„―‐¡‽␠<|‱∴¤☞‰€/¨-:!«¿;#•£“※\'‒^₩)~»]”†"""
 PATTERN = _regcomp("(?P<coding>"+"|".join(["(%s)" % i for i in TRANS.keys()])+')|.')
+
+debug = None
+def logger(name):
+    global debug
+    debug = open('%s.log' % name, 'w', encoding='utf8')
+
 
 with open('words/processed.json', 'r') as f:
     WORDS = set(_jsonload(f))
@@ -25,15 +34,13 @@ def _rem_punctuation(word: str)-> str:
         word = word.replace(i, f" {i} ")
     return word
 
-def _add_punctuation(word: str)-> str:
-    for i in PUNCTUATIONS:
-        word = word.replace(f" {i}", i)
-        if i not in ',.:!?%;':
-            word = word.replace(f"{i} ", i)
-    return word
-
-
 # GENERAL
+
+def count_volume(words: str) -> int:
+    matches = PATTERN.findall(words)
+    counted = Counter(i[0] for i in matches)
+    del counted['']
+    return sum(counted.values())//8
 
 def _equivalent(found: list[str]):
     w = []
@@ -54,14 +61,16 @@ randoms = 0
 def find_zero(word):
     global randoms
     try:
-        return ZEROS[word], False
+        val = ZEROS[word]
+        print("found:", val, file=debug)
+        return val, False
     except KeyError:
         absclass = equivalent(word)
         exist = [i for i in absclass if i in WORDS]
         if exist:
             exist.sort()
             zero = rnd.choice(exist)
-            # print(exist, absclass, zero)
+            print('genze:', exist, sorted(absclass), zero, file=debug)
             randoms += 1
             not_code = False
         else:
@@ -79,6 +88,7 @@ def decode(zero, word) -> list[bool]:
     for z, w in zip(PATTERN.finditer(zero), PATTERN.finditer(word)):
         if w.group('coding'):
             l.append(whole(z) != whole(w))
+            print('write:', whole(z), whole(w), l[-1], file=debug)
     return l
 
 def _convert(toconv: list[bool]) -> list[bytes]:
@@ -105,8 +115,8 @@ def convert(toconv: list[bool]) -> list[bool]:
         
        
 def decode_text(text: str) -> list[bytes]:
-    data = []
-    for i in text.split('\n'):
+    data: list[bool] = []
+    for i in tqdm(text.split('\n')):
         for j in _rem_punctuation(i).split():
             zero, not_coding = find_zero(j)
             if not not_coding:
@@ -120,33 +130,45 @@ def decode_text(text: str) -> list[bytes]:
 def encode_text(text: str, bytes_: str):
     list_bytes = [i == "1" for i in bytes_]
     words = []
-    for i in text.split('\n'):
-        line = []
-        if not list_bytes:
-            # words.append(i)
-            # continue
-            break
-        for j in _rem_punctuation(i).split():
+    old_len = len(list_bytes)
+    progress = tqdm(total=old_len)
+    try:
+        for i in text.split('\n'):
+            progress.update(old_len-len(list_bytes))
+            old_len = len(list_bytes)
+            line = []
             if not list_bytes:
-                line.append(j) 
-                continue
-            zero, not_coding = find_zero(j)
-            if not_coding:
-                line.append(zero)
-            else:
-                added, list_bytes = encode(zero, list_bytes)
-                if j.istitle():
-                    line.append(added.capitalize())
+                # words.append(i)
+                # continue
+                break
+            for j in _rem_punctuation(i).split():
+                if not list_bytes:
+                    line.append(j) 
+                    continue
+                zero, not_coding = find_zero(j)
+                if not_coding:
+                    line.append(zero)
                 else:
-                    line.append(added)                
-        words.append(_add_punctuation(" ".join(line)))
+                    added, list_bytes = encode(zero, list_bytes)
+                    if j.istitle():
+                        line.append(added.capitalize())
+                    else:
+                        line.append(added)                
+            words.append(" ".join(line))
+    except KeyboardInterrupt:
+        pass
     return "\n".join(words)  
         
 def encode(word: str, byt: list[bool]):
     w = []
     for i in PATTERN.finditer(word):
-        if i.group('coding') and byt and byt.pop(0):
-            w.append(TRANS[whole(i)])
+        if i.group('coding') and byt:
+            if byt.pop(0):
+                w.append(TRANS[whole(i)])
+                print('write:', whole(i), TRANS[whole(i)], True, file=debug)
+            else:
+                w.append(whole(i))
+                print('write:', whole(i), whole(i), False, file=debug)
         else:
             w.append(whole(i))
     return "".join(w), byt
