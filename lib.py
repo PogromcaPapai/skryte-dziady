@@ -5,7 +5,11 @@ from typing import Match
 from collections import Counter
 
 from cipher import TRANS
-from tqdm import tqdm
+import importlib.util            
+if importlib.util.find_spec('tqdm'):
+    from tqdm import tqdm
+else:
+    tqdm = None
 
 PUNCTUATIONS = """$¢‘⁄\\‡°{⁂&′,·>§*’¦._№¶—¥₪"}?@–¬(%…[„―‐¡‽␠<|‱∴¤☞‰€/¨-:!«¿;#•£“※\'‒^₩)~»]”†"""
 PATTERN = _regcomp("(?P<coding>"+"|".join(["(%s)" % i for i in TRANS.keys()])+')|.')
@@ -58,7 +62,7 @@ def equivalent(word: str) -> list[str]:
 
 ZEROS = {}
 randoms = 0
-def find_zero(word):
+def find_zero(word) -> tuple[str, bool]:
     global randoms
     try:
         val = ZEROS[word]
@@ -116,7 +120,8 @@ def convert(toconv: list[bool]) -> list[bool]:
        
 def decode_text(text: str) -> list[bytes]:
     data: list[bool] = []
-    for i in tqdm(text.split('\n')):
+    iterat = tqdm(text.split('\n')) if tqdm else text.split('\n')
+    for i in iterat:
         for j in _rem_punctuation(i).split():
             zero, not_coding = find_zero(j)
             if not not_coding:
@@ -131,10 +136,12 @@ def encode_text(text: str, bytes_: str):
     list_bytes = [i == "1" for i in bytes_]
     words = []
     old_len = len(list_bytes)
-    progress = tqdm(total=old_len)
+    if tqdm:
+        progress = tqdm(total=old_len)
     try:
         for i in text.split('\n'):
-            progress.update(old_len-len(list_bytes))
+            if tqdm:
+                progress.update(old_len-len(list_bytes))
             old_len = len(list_bytes)
             line = []
             if not list_bytes:
@@ -159,7 +166,7 @@ def encode_text(text: str, bytes_: str):
         pass
     return "\n".join(words)  
         
-def encode(word: str, byt: list[bool]):
+def encode(word: str, byt: list[bool]) -> tuple[str, list[bool]]:
     w = []
     for i in PATTERN.finditer(word):
         if i.group('coding') and byt:
