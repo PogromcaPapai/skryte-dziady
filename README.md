@@ -19,3 +19,5 @@ Aby uruchomić skrypt do odszyfrowywania, wpisujemy `python loader [KLUCZ] [PLIK
 💡 W folderze <code>zrodla</code> zamieściłem zestaw przykładowych plików do testów.
 
 </aside>
+
+[Więcej informacji](https://www.notion.so/notorycznenotatki/Projekt-zaliczeniowy-dokumentacja-f0701ba9fc3f4905859f875d2ae2a9c6)
