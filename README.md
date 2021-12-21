@@ -1,4 +1,4 @@
-# skryte-dziady
+# Szyfr literacki
 Cryptographic and steganographic algorithm that embeds information in polish orthographic mistakes
 
 # Uruchamianie programu
